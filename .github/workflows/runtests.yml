@@ -1,0 +1,31 @@
+name: Run Tests
+on: push
+
+jobs:
+  tests:
+    name: Tests
+    strategy:
+      matrix:
+        shell: ['PowerShell', 'Windows PowerShell']
+        os: [ubuntu, macos, windows]
+        exclude:
+          - os: ubuntu
+            shell: 'Windows PowerShell'
+          - os: macos
+            shell: 'Windows PowerShell'
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - if: ${{ matrix.shell == 'PowerShell' }}
+        name: Run tests (pwsh)
+        shell: pwsh
+        run: |
+          Install-Module -Name InvokeBuild -Force -SkipPublisherCheck
+          .\build.ps1
+      - if: ${{ matrix.shell == 'Windows PowerShell' }}
+        name: Perform a Pester test from the Tests.ps1 file (powershell)
+        shell: powershell
+        run: |
+          Install-Module -Name InvokeBuild -Force -SkipPublisherCheck
+          .\build.ps1
