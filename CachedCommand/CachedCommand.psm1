@@ -6,8 +6,10 @@ $Script:CachedCommandCaches = @{}
 
 #region LocalizedData
 $culture = 'en-US'
-if (Test-Path -Path (Join-Path -Path $moduleRoot -ChildPath $PSUICulture)) {
-    $culture = $PSUICulture
+if ( ($null -ne $PSUICulture) -and ('' -ne $PSUICulture) ) {
+    if (Test-Path -Path (Join-Path -Path $moduleRoot -ChildPath $PSUICulture) -PathType Container) {
+        $culture = $PSUICulture
+    }
 }
 $importLocalizedDataParams = @{
     BindingVariable = 'localized'

@@ -9,7 +9,7 @@ Describe 'CachedCommand' {
     }
 
     AfterAll {
-        Remove-Module -Name $pesterModuleName
+        Remove-Module -Name $pesterModuleName -ErrorAction SilentlyContinue
     }
 
     Context 'Invoke-CachedCommand' {
@@ -133,7 +133,7 @@ Describe 'CachedCommand' {
 
         It 'Does not cache NULL values when called with -SkipNullValues' {
             $inputValue = $null
-            $commandOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'SkipNull' -ScriptBlock { $inputValue } -SkipNull
+            $null = Invoke-CachedCommand -Cache 'PesterTest' -Label 'SkipNull' -ScriptBlock { $inputValue } -SkipNull
             $inputValue = 1
             $cachedOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'SkipNull' -ScriptBlock { $inputValue } -SkipNull
 
@@ -142,7 +142,7 @@ Describe 'CachedCommand' {
 
         It 'Does cache NULL values when called without -SkipNullValues' {
             $inputValue = $null
-            $commandOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'SkipNull' -ScriptBlock { $inputValue }
+            $null = Invoke-CachedCommand -Cache 'PesterTest' -Label 'SkipNull' -ScriptBlock { $inputValue }
             $inputValue = 1
             $cachedOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'SkipNull' -ScriptBlock { $inputValue }
 

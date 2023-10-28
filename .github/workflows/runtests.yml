@@ -24,7 +24,7 @@ jobs:
           Install-Module -Name InvokeBuild -Force -SkipPublisherCheck
           .\build.ps1
       - if: ${{ matrix.shell == 'Windows PowerShell' }}
-        name: Perform a Pester test from the Tests.ps1 file (powershell)
+        name: Run tests (powershell)
         shell: powershell
         run: |
           Install-Module -Name InvokeBuild -Force -SkipPublisherCheck
