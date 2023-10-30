@@ -63,7 +63,7 @@ Describe 'CachedCommand' {
 
             $commandOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -Force
             $cachedOutput1 = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -AbsoluteExpiration $expiration
-            Start-Sleep -Milliseconds $milliseconds
+            Start-Sleep -Milliseconds ($milliseconds * 1.1)
             $cachedOutput2 = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -AbsoluteExpiration $expiration
 
             $commandOutput | Should -BeOfType [guid]
