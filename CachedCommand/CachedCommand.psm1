@@ -224,9 +224,9 @@ function Show-CachedCommand {
     )
 
     if ($PSBoundParameters.ContainsKey('Cache')) {
-        $cacheKeys = $Script:CachedCommandCaches.Keys.Where({ $Cache -contains $_ })
+        $cacheKeys = $Script:CachedCommandCaches.get_Keys().Where({ $Cache -contains $_ })
     } else {
-        $cacheKeys = $Script:CachedCommandCaches.Keys
+        $cacheKeys = $Script:CachedCommandCaches.get_Keys()
     }
 
     foreach ($cacheKey in $cacheKeys | Sort-Object) {
@@ -234,9 +234,9 @@ function Show-CachedCommand {
         $cacheData = $Script:CachedCommandCaches[$cacheKey]
 
         if ($PSBoundParameters.ContainsKey('Label')) {
-            $labelKeys = $cacheData.Keys.Where({ $Label -contains $_ })
+            $labelKeys = $cacheData.get_Keys().Where({ $Label -contains $_ })
         } else {
-            $labelKeys = $cacheData.Keys
+            $labelKeys = $cacheData.get_Keys()
         }
 
         foreach ($labelKey in $labelKeys | Sort-Object) {
