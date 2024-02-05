@@ -34,7 +34,8 @@ task RunPester {
             Verbosity = 'Detailed'
         }
         Run          = @{
-            Exit = $true
+            Exit     = $true
+            PassThru = $true
         }
         TestResult   = @{
             Enabled = $true
