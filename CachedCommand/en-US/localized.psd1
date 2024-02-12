@@ -4,7 +4,7 @@
     ScriptBlockChanged         = 'ScriptBlock has changed'
     AbsoluteExpirationExceeded = 'Absolute Expiration Exceeded'
     SlidingExpirationExceeded  = 'Sliding Expiration Exceeded'
-    MaxHitsExceeded            = 'Max Hits Exceeded'
+    MaxHitCountExceeded        = 'Max Hit Count Exceeded'
     ForceSpecified             = 'Called with -Force'
     InvokingScriptBlock        = 'Invoking ScriptBlock'
     ReturningCachedValue       = 'Returning Cached Value'

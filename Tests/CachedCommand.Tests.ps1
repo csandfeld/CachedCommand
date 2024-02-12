@@ -17,7 +17,7 @@ Describe 'CachedCommand' {
         AfterEach {
             # Remove created cache variables
             InModuleScope $pesterModuleName {
-                $Script:CachedCommandCaches.Clear()
+                $Script:CachedCommandCacheStore.Clear()
             }
         }
 
@@ -39,17 +39,17 @@ Describe 'CachedCommand' {
             $commandOutput2 | Should -Not -Be $commandOutput1
         }
 
-        It 'Expires the cache if MaxHits is reached' {
-            $maxHits = 3
+        It 'Expires the cache if MaxHitCount is reached' {
+            $maxHitCount = 3
             $commandOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -Force
 
             $commandOutput | Should -BeOfType [guid]
 
-            for ($i = 0; $i -lt $maxHits; $i++) {
-                $cachedOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -MaxHits $maxHits
+            for ($i = 0; $i -lt $maxHitCount; $i++) {
+                $cachedOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -MaxHitCount $maxHitCount
 
                 $cachedOutput | Should -BeOfType [guid]
-                if ($i -eq $maxHits - 1) {
+                if ($i -eq $maxHitCount - 1) {
                     $cachedOutput | Should -Not -Be $commandOutput
                 } else {
                     $cachedOutput | Should -Be $commandOutput
@@ -126,8 +126,8 @@ Describe 'CachedCommand' {
             Should -Throw
 
             InModuleScope $pesterModuleName {
-                $Script:CachedCommandCaches['PesterTest'].Keys | Should -Not -Contain 'ExceptionThrown'
-                $Script:CachedCommandCaches['PesterTest'].Keys | Should -BeNullOrEmpty
+                $Script:CachedCommandCacheStore['PesterTest'].Keys | Should -Not -Contain 'ExceptionThrown'
+                $Script:CachedCommandCacheStore['PesterTest'].Keys | Should -BeNullOrEmpty
             }
         }
 
@@ -158,8 +158,8 @@ Describe 'CachedCommand' {
             $verboseStream3 = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NullValue' -ScriptBlock {} -Verbose 4>&1
             # When using the -Force switch
             $verboseStream4 = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NullValue' -ScriptBlock {} -Verbose -Force 4>&1
-            # When using MaxHits
-            $verboseStream5 = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NullValue' -ScriptBlock {} -Verbose -MaxHits 0 4>&1
+            # When using MaxHitCount
+            $verboseStream5 = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NullValue' -ScriptBlock {} -Verbose -MaxHitCount 0 4>&1
             # When using AbsoluteExpiration
             $verboseStream6 = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NullValue' -ScriptBlock {} -Verbose -AbsoluteExpiration ([timespan]::FromMinutes(-10)) 4>&1
             # When using SlidingExpiration
@@ -179,15 +179,15 @@ Describe 'CachedCommand' {
         BeforeEach {
             # Create sample cache variables
             InModuleScope $pesterModuleName {
-                $Script:CachedCommandCaches['PesterTest'] = @{ 'Key1' = 'Value1'; 'Key2' = 'Value2' }
-                $Script:CachedCommandCaches['PesterTest2'] = @{ 'Key1' = 'Value1'; 'Key2' = 'Value2' }
+                $Script:CachedCommandCacheStore['PesterTest'] = @{ 'Key1' = [pscustomobject]@{ Value = 'Value1' } ; 'Key2' = [pscustomobject]@{ Value = 'Value2' } }
+                $Script:CachedCommandCacheStore['PesterTest2'] = @{ 'Key1' = [pscustomobject]@{ Value = 'Value1' } ; 'Key2' = [pscustomobject]@{ Value = 'Value2' } }
             }
         }
 
         AfterEach {
             # Remove created cache variables
             InModuleScope $pesterModuleName {
-                $Script:CachedCommandCaches.Clear()
+                $Script:CachedCommandCacheStore.Clear()
             }
         }
 
@@ -195,8 +195,8 @@ Describe 'CachedCommand' {
             Clear-CachedCommand -Cache 'PesterTest' -Label 'Key1'
 
             InModuleScope $pesterModuleName {
-                $Script:CachedCommandCaches['PesterTest'].Key1 | Should -BeNullOrEmpty
-                $Script:CachedCommandCaches['PesterTest'].Key2 | Should -Be 'Value2'
+                $Script:CachedCommandCacheStore['PesterTest'].Key1.Value | Should -BeNullOrEmpty
+                $Script:CachedCommandCacheStore['PesterTest'].Key2.Value | Should -Be 'Value2'
             }
         }
 
@@ -204,8 +204,8 @@ Describe 'CachedCommand' {
             Clear-CachedCommand -Cache 'PesterTest' -Label 'Key2'
 
             InModuleScope $pesterModuleName {
-                $Script:CachedCommandCaches['PesterTest'].Key1 | Should -Be 'Value1'
-                $Script:CachedCommandCaches['PesterTest'].Key2 | Should -BeNullOrEmpty
+                $Script:CachedCommandCacheStore['PesterTest'].Key1.Value | Should -Be 'Value1'
+                $Script:CachedCommandCacheStore['PesterTest'].Key2.Value | Should -BeNullOrEmpty
             }
         }
 
@@ -213,8 +213,8 @@ Describe 'CachedCommand' {
             Clear-CachedCommand -Cache 'PesterTest' -AllLabels
 
             InModuleScope $pesterModuleName {
-                $Script:CachedCommandCaches['PesterTest'].Key1 | Should -BeNullOrEmpty
-                $Script:CachedCommandCaches['PesterTest'].Key2 | Should -BeNullOrEmpty
+                $Script:CachedCommandCacheStore['PesterTest'].Key1 | Should -BeNullOrEmpty
+                $Script:CachedCommandCacheStore['PesterTest'].Key2 | Should -BeNullOrEmpty
             }
         }
 
@@ -222,7 +222,7 @@ Describe 'CachedCommand' {
             Clear-CachedCommand -AllCaches
 
             InModuleScope $pesterModuleName {
-                $Script:CachedCommandCaches.Keys | Should -BeNullOrEmpty
+                $Script:CachedCommandCacheStore.Keys | Should -BeNullOrEmpty
             }
         }
 
@@ -246,9 +246,9 @@ Describe 'CachedCommand' {
         BeforeAll {
             # Create sample cache variables
             InModuleScope $pesterModuleName {
-                $Script:CachedCommandCaches['Cache1'] = @{ 'Label1-1' = 'Value1-1' }
-                $Script:CachedCommandCaches['Cache2'] = @{ 'Label2-1' = 'Value2-1'; 'Label2-2' = 'Value2-2' }
-                $Script:CachedCommandCaches['Cache3'] = @{ 'Label3-1' = 'Value3-1'; 'Label3-2' = 'Value3-2'; 'Label3-3' = 'Value3-3' }
+                $Script:CachedCommandCacheStore['Cache1'] = @{ 'Label1-1' = [pscustomobject]@{ Value = 'Value1-1' } }
+                $Script:CachedCommandCacheStore['Cache2'] = @{ 'Label2-1' = [pscustomobject]@{ Value = 'Value2-1' } ; 'Label2-2' = [pscustomobject]@{ Value = 'Value2-2' } }
+                $Script:CachedCommandCacheStore['Cache3'] = @{ 'Label3-1' = [pscustomobject]@{ Value = 'Value3-1' } ; 'Label3-2' = [pscustomobject]@{ Value = 'Value3-2' }; 'Label3-3' = [pscustomobject]@{ Value = 'Value3-3' } }
             }
         }
 
@@ -284,6 +284,20 @@ Describe 'CachedCommand' {
             $commandOutput.Label | Should -Contain 'Label3-1'
             $commandOutput.Label | Should -Not -Contain 'Label3-2'
             $commandOutput.Label | Should -Contain 'Label3-3'
+        }
+
+        It 'Returns object with "Cache", "Label" and "Value" properties' {
+            $commandOutput = Show-CachedCommand -Cache 'Cache1' -Label 'Label1-1'
+
+            $commandOutput.Cache | Should -Be 'Cache1'
+            $commandOutput.Label | Should -Be 'Label1-1'
+            $commandOutput.Value | Should -Be 'Value1-1'
+        }
+
+        It 'Returns the cached value when called with -ValueOnly parameter' {
+            $commandOutput = Show-CachedCommand -Cache 'Cache1' -Label 'Label1-1' -ValueOnly
+
+            $commandOutput | Should -Be 'Value1-1'
         }
     }
 }
