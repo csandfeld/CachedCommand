@@ -85,29 +85,30 @@ function Invoke-CachedCommand {
             if ($cachedValueNotFound) {
                 $ShouldInvokeScriptBlock = $true
             } else {
-                switch ($cachedValue) {
-                    { $cachedValue.ScriptBlockHashCode -ne $scriptBlockHashCode } {
-                        $ShouldInvokeScriptBlock = $true
-                        if ($shouldWriteVerbose) { Write-Verbose -Message $localized.ScriptBlockChanged }
-                        break
-                    }
 
-                    { $PSBoundParameters.ContainsKey('AbsoluteExpiration') -and ($timeStamp - $cachedValue.CreationTimeUtc) -gt $AbsoluteExpiration } {
+                if ($cachedValue.ScriptBlockHashCode -ne $scriptBlockHashCode) {
+                    $ShouldInvokeScriptBlock = $true
+                    if ($shouldWriteVerbose) { Write-Verbose -Message $localized.ScriptBlockChanged }
+                }
+
+                if ($PSBoundParameters.ContainsKey('AbsoluteExpiration') -and -not $ShouldInvokeScriptBlock) {
+                    if (($timeStamp - $cachedValue.CreationTimeUtc) -gt $AbsoluteExpiration) {
                         $ShouldInvokeScriptBlock = $true
                         if ($shouldWriteVerbose) { Write-Verbose -Message $localized.AbsoluteExpirationExceeded }
-                        break
                     }
+                }
 
-                    { $PSBoundParameters.ContainsKey('SlidingExpiration') -and ($timeStamp - $cachedValue.LastAccessTimeUtc) -gt $SlidingExpiration } {
+                if ($PSBoundParameters.ContainsKey('SlidingExpiration') -and -not $ShouldInvokeScriptBlock) {
+                    if ( ($timeStamp - $cachedValue.LastAccessTimeUtc) -gt $SlidingExpiration ) {
                         $ShouldInvokeScriptBlock = $true
                         if ($shouldWriteVerbose) { Write-Verbose -Message $localized.SlidingExpirationExceeded }
-                        break
                     }
+                }
 
-                    { $PSBoundParameters.ContainsKey('MaxHitCount') -and ($cachedValue.HitCount -ge $MaxHitCount) } {
+                if ($PSBoundParameters.ContainsKey('MaxHitCount') -and -not $ShouldInvokeScriptBlock) {
+                    if ($cachedValue.HitCount -ge $MaxHitCount) {
                         $ShouldInvokeScriptBlock = $true
                         if ($shouldWriteVerbose) { Write-Verbose -Message $localized.MaxHitCountExceeded }
-                        break
                     }
                 }
             }
@@ -255,4 +256,3 @@ function Show-CachedCommand {
         }
     }
 }
-#endregion
