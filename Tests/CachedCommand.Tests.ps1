@@ -74,26 +74,38 @@ Describe 'CachedCommand' {
             $cachedOutput2 | Should -Not -Be $commandOutput
         }
 
-        It 'Expires the cache if SlidingExpiration is reached' {
-            $milliseconds = 200
-            $expiration = [timespan]::FromMilliseconds($milliseconds)
+        It 'Expires the cache if SlidingExpiration is reached' -Tag 'SlidingExpiration' {
+            $slidingExpirationMilliseconds = 200
+            $slidingExpirationTimespan = [timespan]::FromMilliseconds($slidingExpirationMilliseconds)
 
             $commandOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -Force
 
-            $value = 4
+            $sleepMillisecondsBase = 2
+            $sleepMillisecondsPower = 4
             do {
-                $sleepMilliseconds = [math]::Pow(2, $value)
-                $value++
-                # "Sleeping: $sleepMilliseconds ms" | Write-Host -ForegroundColor Yellow
-                Start-Sleep -Milliseconds $sleepMilliseconds
-                $cachedOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -SlidingExpiration $expiration
-
-                if ($sleepMilliseconds -ge $milliseconds) {
-                    $cachedOutput | Should -Not -Be $commandOutput
-                } else {
-                    $cachedOutput | Should -Be $commandOutput
+                $lastAccessTimeBefore = InModuleScope $pesterModuleName {
+                    $Script:CachedCommandCacheStore['PesterTest']['NewGuid'].LastAccessTimeUtc
                 }
-            } while ($sleepMilliseconds -lt $milliseconds)
+
+                $cachedOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -SlidingExpiration $slidingExpirationTimespan
+
+                $lastAccessTimeAfter = InModuleScope $pesterModuleName {
+                    $Script:CachedCommandCacheStore['PesterTest']['NewGuid'].LastAccessTimeUtc
+                }
+
+                $lastAccessTimeDifferenceMilliseconds = ($lastAccessTimeAfter - $lastAccessTimeBefore).TotalMilliseconds
+
+                if ($lastAccessTimeDifferenceMilliseconds -lt $slidingExpirationMilliseconds) {
+                    $cachedOutput | Should -Be $commandOutput
+
+                    $sleepMilliseconds = [math]::Pow($sleepMillisecondsBase, $sleepMillisecondsPower)
+                    $sleepMillisecondsPower++
+                    # Write-Host -Object "Diff: $lastAccessTimeDifferenceMilliseconds ms, Sleep: $sleepMilliseconds ms" -ForegroundColor Yellow
+                    Start-Sleep -Milliseconds $sleepMilliseconds
+                }
+            } while ($sleepMilliseconds -lt $slidingExpirationMilliseconds -or $lastAccessTimeDifferenceMilliseconds -lt $slidingExpirationMilliseconds)
+
+            $cachedOutput | Should -Not -Be $commandOutput
         }
 
         It 'Expires the cache if the scriptblock has been changed' {
@@ -122,7 +134,7 @@ Describe 'CachedCommand' {
         }
 
         It 'Does not set cache if exception thrown in scripblock' {
-            { Invoke-CachedCommand  -Cache 'PesterTest' -Label 'ExceptionThrown' -ScriptBlock { throw 'Some Exception' } -Force -ErrorAction Stop } |
+            { Invoke-CachedCommand -Cache 'PesterTest' -Label 'ExceptionThrown' -ScriptBlock { throw 'Some Exception' } -Force -ErrorAction Stop } |
             Should -Throw
 
             InModuleScope $pesterModuleName {
