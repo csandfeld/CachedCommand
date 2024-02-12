@@ -116,7 +116,7 @@ Describe 'CachedCommand' {
             $changedOutput | Should -Be $commandOutput
         }
 
-        It 'Rethrows exception thrown in scripblock' {
+        It 'Rethrows exception thrown in scriptblock' {
             { Invoke-CachedCommand -Cache 'PesterTest' -Label 'ExceptionThrown' -ScriptBlock { throw 'Some Exception' } -Force -ErrorAction Stop } |
             Should -Throw -ExpectedMessage 'Some Exception'
         }
