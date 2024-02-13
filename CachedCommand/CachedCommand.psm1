@@ -8,7 +8,7 @@ $moduleFolderPath = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
 
 
 $culture = 'en-US'
-if ( $PSUICulture -and ($PSUICulture -ne '') ) {
+if ($PSUICulture -and $PSUICulture -ne '') {
     $localizationFolderPath = Join-Path -Path $moduleFolderPath -ChildPath $PSUICulture
     $localizationFilePath = Join-Path -Path $localizationFolderPath -ChildPath 'localized.psd1'
 
