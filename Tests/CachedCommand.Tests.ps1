@@ -95,7 +95,7 @@ Describe 'CachedCommand' {
 
                 $lastAccessTimeDifferenceMilliseconds = ($lastAccessTimeAfter - $lastAccessTimeBefore).TotalMilliseconds
 
-                if ($lastAccessTimeDifferenceMilliseconds -lt $slidingExpirationMilliseconds) {
+                if ($lastAccessTimeDifferenceMilliseconds -le $slidingExpirationMilliseconds) {
                     $cachedOutput | Should -Be $commandOutput
 
                     $sleepMilliseconds = [math]::Pow($sleepMillisecondsBase, $sleepMillisecondsPower)
