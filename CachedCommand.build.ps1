@@ -26,7 +26,7 @@ task RunPester {
         CodeCoverage = @{
             CoveragePercentTarget = 90
             Enabled               = $true
-            OutputPath            = "$PSScriptRoot/Output/coverage.xml"
+            OutputPath            = "$PSScriptRoot/output/code-coverage.xml"
             OutputFormat          = 'CoverageGutters'
             Path                  = $codeCoveragePaths
         }
@@ -39,7 +39,7 @@ task RunPester {
         }
         TestResult   = @{
             Enabled = $true
-            OutputPath = "$PSScriptRoot/Output/testResults.xml"
+            OutputPath = "$PSScriptRoot/output/test-results.xml"
         }
     }
 

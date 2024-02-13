@@ -29,3 +29,8 @@ jobs:
         run: |
           Install-Module -Name InvokeBuild -Force -SkipPublisherCheck
           .\build.ps1
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: Test Results - ${{ matrix.shell }} - ${{ matrix.os }}
+          path: output/test-results.xml
