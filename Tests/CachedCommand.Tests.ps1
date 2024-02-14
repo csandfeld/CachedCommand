@@ -85,7 +85,6 @@ Describe 'CachedCommand' {
 
             $lastAccessTimeDifferenceMilliseconds = 0
 
-            # while ($lastAccessTimeDifferenceMilliseconds -le $slidingExpirationMilliseconds -and $sleepMilliseconds -le $sleepMillisecondsMax) {
             while ($sleepMilliseconds -le $sleepMillisecondsMax) {
                 $cachedObjectBefore = InModuleScope $pesterModuleName { $Script:CachedCommandCacheStore['PesterTest']['NewGuid'] }
                 $lastAccessTimeBefore = $cachedObjectBefore.LastAccessTimeUtc.TimeOfDay
