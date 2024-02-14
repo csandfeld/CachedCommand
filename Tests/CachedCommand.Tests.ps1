@@ -80,34 +80,38 @@ Describe 'CachedCommand' {
 
             $commandOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -Force
 
-            $sleepMillisecondsBase = 2
+            $sleepMillisecondsMax = $slidingExpirationMilliseconds * 2
             $sleepMillisecondsPower = 4
-            do {
-                $lastAccessTimeBefore = InModuleScope $pesterModuleName {
-                    $Script:CachedCommandCacheStore['PesterTest']['NewGuid'].LastAccessTimeUtc
-                }
+
+            $lastAccessTimeDifferenceMilliseconds = 0
+
+            # while ($lastAccessTimeDifferenceMilliseconds -le $slidingExpirationMilliseconds -and $sleepMilliseconds -le $sleepMillisecondsMax) {
+            while ($sleepMilliseconds -le $sleepMillisecondsMax) {
+                $cachedObjectBefore = InModuleScope $pesterModuleName { $Script:CachedCommandCacheStore['PesterTest']['NewGuid'] }
+                $lastAccessTimeBefore = $cachedObjectBefore.LastAccessTimeUtc.TimeOfDay
 
                 $cachedOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -SlidingExpiration $slidingExpirationTimespan
 
-                $lastAccessTimeAfter = InModuleScope $pesterModuleName {
-                    $Script:CachedCommandCacheStore['PesterTest']['NewGuid'].LastAccessTimeUtc
+                $cachedObjectAfter = InModuleScope $pesterModuleName { $Script:CachedCommandCacheStore['PesterTest']['NewGuid'] }
+                $lastAccessTimeAfter = $cachedObjectAfter.LastAccessTimeUtc.TimeOfDay
+
+                $lastAccessTimeDifference = ($lastAccessTimeAfter - $lastAccessTimeBefore)
+                $lastAccessTimeDifferenceMilliseconds = $lastAccessTimeDifference.TotalMilliseconds
+
+                if ($lastAccessTimeDifferenceMilliseconds -gt $slidingExpirationMilliseconds) {
+                    break
                 }
 
-                $lastAccessTimeDifferenceMilliseconds = ($lastAccessTimeAfter - $lastAccessTimeBefore).TotalMilliseconds
-
-                if ($lastAccessTimeDifferenceMilliseconds -le $slidingExpirationMilliseconds) {
-                    $cachedOutput | Should -Be $commandOutput
-
-                    $sleepMilliseconds = [math]::Pow($sleepMillisecondsBase, $sleepMillisecondsPower)
-                    $sleepMillisecondsPower++
-                    # Write-Host -Object "Diff: $lastAccessTimeDifferenceMilliseconds ms, Sleep: $sleepMilliseconds ms" -ForegroundColor Yellow
-                    Start-Sleep -Milliseconds $sleepMilliseconds
-                }
-            } while ($sleepMilliseconds -lt $slidingExpirationMilliseconds -or $lastAccessTimeDifferenceMilliseconds -lt $slidingExpirationMilliseconds)
+                $cachedOutput | Should -Be $commandOutput
+                
+                $sleepMilliseconds = [math]::Pow(2, $sleepMillisecondsPower)
+                $sleepMillisecondsPower++
+                Start-Sleep -Milliseconds $sleepMilliseconds
+            }
 
             $cachedOutput | Should -Not -Be $commandOutput
         }
-
+        
         It 'Expires the cache if the scriptblock has been changed' {
             $commandOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { [guid]::NewGuid() } -Force
             $changedOutput = Invoke-CachedCommand -Cache 'PesterTest' -Label 'NewGuid' -ScriptBlock { $g = [guid]::NewGuid() ; $g }
